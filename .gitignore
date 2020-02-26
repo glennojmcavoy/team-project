@@ -72,3 +72,6 @@ fabric.properties
 
 #Ignore genrated resized Files
 data/resized/*
+
+.idea/misc.xml
+.idea/team-project-ML.iml
