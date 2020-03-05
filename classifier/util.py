@@ -34,16 +34,26 @@ def readImageForPrediction(filePath):
     return np.asarray(img.numpy()).reshape((1, 40, 40, 3))
 
 
-def getDataSet(inPathRoot: str, outPathRoot: str, runPreProcessor=True, trainTestSplit=(80, 20)) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
-    splitOut = outPathRoot.split("/")
+def __goBackOneDir(path):
+    splitOut = path.split("/")
     splitOut.remove(splitOut[-2])
     out = splitOut[0]
     for x in range(1, len(splitOut)):
         out = out + "/" + splitOut[x]
+    return out
+
+
+def batchResizeAndSplit(inPathRoot: str, outPathRoot: str, trainTestSplit=(80, 20)):
+    out = __goBackOneDir(outPathRoot)
+    preprocessor = PreProcessImages(inPathRoot)
+    preprocessor.batchResize(keepAspectRatio=False, outputTargetSize=(40, 40), outputDirRoot=outPathRoot, outFormat="jpg")
+    preprocessor.splitDataIntoTrainAndTest(outPathRoot, out, trainTestSplit)
+
+
+def getDataSet(inPathRoot: str, outPathRoot: str, runPreProcessor=True, trainTestSplit=(80, 20)) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+    out = __goBackOneDir(inPathRoot)
     if runPreProcessor:
-        preprocessor = PreProcessImages(inPathRoot)
-        preprocessor.batchResize(keepAspectRatio=False, outputTargetSize=(40, 40), outputDirRoot=outPathRoot, outFormat="jpg")
-        preprocessor.splitDataIntoTrainAndTest(outPathRoot, out, trainTestSplit)
+        batchResizeAndSplit(inPathRoot, outPathRoot, trainTestSplit)
 
     train = tf.data.Dataset.list_files(out + "train/*/*.jpg")
     test = tf.data.Dataset.list_files(out + "test/*/*.jpg")
